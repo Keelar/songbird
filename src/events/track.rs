@@ -10,6 +10,8 @@
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum TrackEvent {
+    /// The attached track has just started playing
+    Start,
     /// The attached track has resumed playing.
     ///
     /// This event will not fire when a track first starts,

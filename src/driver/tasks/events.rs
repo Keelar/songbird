@@ -4,7 +4,7 @@ use crate::{
     tracks::{TrackHandle, TrackState},
 };
 use flume::Receiver;
-use tracing::{debug, info, instrument, trace};
+use tracing::{debug, error, info, instrument, trace};
 
 #[instrument(skip(_interconnect, evt_rx))]
 pub(crate) async fn runner(_interconnect: Interconnect, evt_rx: Receiver<EventMessage>) {
@@ -56,6 +56,8 @@ pub(crate) async fn runner(_interconnect: Interconnect, evt_rx: Receiver<EventMe
             Ok(ChangeState(i, change)) => {
                 use TrackStateChange::*;
 
+                info!("Track state changed!");
+
                 let max_states = states.len();
                 debug!(
                     "Changing state for track {} of {}: {:?}",
@@ -68,6 +70,7 @@ pub(crate) async fn runner(_interconnect: Interconnect, evt_rx: Receiver<EventMe
 
                 match change {
                     Mode(mode) => {
+                        info!("Mode state change!");
                         let old = state.playing;
                         state.playing = mode;
                         if old != mode {
@@ -75,19 +78,23 @@ pub(crate) async fn runner(_interconnect: Interconnect, evt_rx: Receiver<EventMe
                         }
                     },
                     Volume(vol) => {
+                        info!("Volume state change!");
                         state.volume = vol;
                     },
                     Position(pos) => {
+                        error!("Pos changed: {pos:?}");
                         // Currently, only Tick should fire time events.
                         state.position = pos;
                     },
                     Loops(loops, user_set) => {
+                        info!("Loops!");
                         state.loops = loops;
                         if !user_set {
                             global.fire_track_event(TrackEvent::Loop, i);
                         }
                     },
                     Total(new) => {
+                        info!("Total state change!");
                         // Massive, unprecedented state changes.
                         *state = new;
                     },
